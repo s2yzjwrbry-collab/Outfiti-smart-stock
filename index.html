@@ -7,31 +7,37 @@
 <title>OUTFITI SMART STOCK</title>
 </head>
 <body>
-<header><div class="brand">OUTFITI<span>SMART STOCK</span></div><div class="user" id="userLabel">ADMIN</div></header>
+<header><div class="brand">OUTFITI<span>SMART STOCK · KENITRA</span></div><div class="header-right"><span class="user" id="userLabel">CONNEXION</span><button id="logoutBtn" class="outline logout" hidden>Quitter</button></div></header>
 <main>
-<section class="hero"><p class="eyebrow">KENITRA · INVENTORY SYSTEM</p><h1>CONTROL<br><em>YOUR STOCK.</em></h1><p class="muted">Gestion intelligente de votre boutique.</p></section>
+<section id="loginView" class="login-view">
+  <div class="hero"><p class="eyebrow">KENITRA · INVENTORY SYSTEM</p><h1>CONTROL<br><em>YOUR STOCK.</em></h1><p class="muted">Connectez-vous à votre espace OUTFITI.</p></div>
+  <form id="loginForm" class="login-card"><h2>CONNEXION</h2><label>Email<input id="loginEmail" type="email" autocomplete="username" required placeholder="nom@outfiti.ma"></label><label>Mot de passe<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••"></label><button class="primary" type="submit">ACCÉDER À MON ESPACE</button><p id="loginMessage" class="message"></p></form>
+</section>
+<div id="appView" hidden>
+<section class="hero compact"><p class="eyebrow">OUTFITI · KENITRA</p><h1>CONTROL<br><em>YOUR STOCK.</em></h1><p class="muted" id="welcomeText">Gestion de votre boutique.</p></section>
 <nav class="tabs"><button class="tab active" data-tab="dashboard">Dashboard</button><button class="tab" data-tab="sale">Nouvelle vente</button><button class="tab" data-tab="stock">Stock</button><button class="tab" data-tab="history">Historique</button></nav>
 <section id="dashboard" class="panel active">
-<div class="stats"><article><small>VENTES DU JOUR</small><strong id="todaySales">0 DH</strong></article><article><small>BÉNÉFICE BRUT</small><strong id="todayProfit">0 DH</strong></article><article><small>ARTICLES EN STOCK</small><strong id="stockCount">6</strong></article><article><small>RÉFÉRENCES</small><strong id="productCount">1</strong></article></div>
-<div class="section-head"><h2>APERÇU DU STOCK</h2><span class="tag">LIVE LOCAL</span></div><div id="dashProducts"></div>
+<div class="stats"><article><small>VENTES DU JOUR</small><strong id="todaySales">0 DH</strong></article><article id="profitCard"><small>BÉNÉFICE BRUT</small><strong id="todayProfit">0 DH</strong></article><article><small>ARTICLES EN STOCK</small><strong id="stockCount">0</strong></article><article><small>RÉFÉRENCES</small><strong id="productCount">0</strong></article></div>
+<div class="section-head"><h2>APERÇU DU STOCK</h2><span class="tag" id="syncTag">CLOUD SYNC</span></div><div id="dashProducts"></div>
 </section>
 <section id="sale" class="panel">
-<div class="section-head"><h2>ENREGISTRER UNE VENTE</h2><span class="tag">PHOTO + VALIDATION</span></div>
-<label class="photo-box" for="salePhoto"><span class="camera">＋</span><b>Prendre une photo du produit</b><small>La reconnaissance IA sera connectée dans la prochaine étape. Pour l'instant, sélectionnez le produit manuellement.</small><img id="photoPreview" hidden></label>
+<div class="section-head"><h2>ENREGISTRER UNE VENTE</h2><span class="tag">STOCK EN DIRECT</span></div>
+<label class="photo-box" for="salePhoto"><span class="camera">＋</span><b>Prendre une photo du produit</b><small>Photo facultative pour garder un repère visuel. La reconnaissance automatique n'est pas encore activée.</small><img id="photoPreview" hidden></label>
 <input id="salePhoto" type="file" accept="image/*" capture="environment" hidden>
-<label>Produit<select id="saleProduct"></select></label>
-<label>Pointure / variante<select id="saleVariant"></select></label>
-<label>Quantité<input id="saleQty" type="number" min="1" value="1"></label>
-<label>Prix de vente (DH)<input id="salePrice" type="number" min="0"></label>
-<label>Vendeur<select id="seller"><option>Administrateur</option><option>Vendeur</option></select></label>
+<label>Produit<select id="saleProduct" required></select></label>
+<label>Pointure / variante<select id="saleVariant" required></select></label>
+<label>Quantité<input id="saleQty" type="number" min="1" value="1" inputmode="numeric"></label>
+<label>Prix de vente (DH)<input id="salePrice" type="number" readonly></label>
 <button class="primary" id="saveSale">CONFIRMER LA VENTE</button><p id="saleMessage" class="message"></p>
 </section>
 <section id="stock" class="panel">
-<div class="section-head"><h2>CATALOGUE PRODUITS</h2><button class="outline" id="addProductBtn">＋ Ajouter</button></div><div id="stockList"></div>
+<div class="section-head"><h2>CATALOGUE PRODUITS</h2><button class="outline" id="addProductBtn" hidden>＋ Ajouter</button></div><div id="stockList"></div>
 </section>
 <section id="history" class="panel"><div class="section-head"><h2>HISTORIQUE DES VENTES</h2></div><div id="historyList"></div></section>
+</div>
 </main>
 <footer>OUTFITI © 2026 <span>BUILT FOR THE STREET.</span></footer>
-<dialog id="productDialog"><form method="dialog" id="productForm"><h2>NOUVEAU PRODUIT</h2><label>Nom<input name="name" required></label><label>Couleur<input name="color" placeholder="Noir / Blanc"></label><label>Pointures / tailles séparées par virgule<input name="variants" placeholder="S, M, L, XL ou 40, 41, 42" required></label><label>Stock total par variante<input name="stock" type="number" min="0" value="1" required></label><label>Prix d'achat (DH)<input name="cost" type="number" min="0" required></label><label>Prix de vente (DH)<input name="price" type="number" min="0" required></label><div class="actions"><button class="outline" value="cancel">Annuler</button><button class="primary" id="createProduct" value="default">Ajouter</button></div></form></dialog>
+<dialog id="productDialog"><form id="productForm"><h2>NOUVEAU PRODUIT</h2><label>Nom<input name="name" required></label><label>Couleur<input name="color" placeholder="Noir / Blanc"></label><label>Pointures / tailles séparées par virgule<input name="variants" placeholder="S, M, L, XL ou 40, 41, 42" required></label><label>Stock initial pour chaque variante<input name="stock" type="number" min="0" value="1" required></label><label>Prix d'achat (DH)<input name="cost" type="number" min="0" step="0.01" required></label><label>Prix de vente (DH)<input name="price" type="number" min="0" step="0.01" required></label><div class="actions"><button type="button" class="outline" id="cancelProduct">Annuler</button><button class="primary" type="submit">Ajouter</button></div><p id="productMessage" class="message"></p></form></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 </body></html>
