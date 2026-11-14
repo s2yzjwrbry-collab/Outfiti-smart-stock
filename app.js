@@ -43,12 +43,60 @@ function render(){
  if(isAdmin()) $('todayProfit').textContent=money(todays.reduce((n,s)=>n+(s.price-s.cost)*s.qty,0));
  $('stockCount').textContent=products.reduce((n,p)=>n+stockFor(p),0); $('productCount').textContent=products.length;
  $('dashProducts').innerHTML=products.slice(0,5).map(p=>`<div class="product"><div><b>${esc(p.name)}</b><p>${esc(p.color||'')} · ${stockFor(p)} unités</p></div><strong>${money(p.selling_price)}</strong></div>`).join('')||'<div class="empty">Aucun produit.</div>';
- $('stockList').innerHTML=products.map(p=>{const vs=variants.filter(v=>String(v.product_id)===String(p.id));return `<div class="product stock-product"><div class="stock-product-info"><b>${esc(p.name)}</b><p>${esc(p.color||'')}</p><div class="variant-list">${vs.length?vs.map(v=>`<span class="variant-chip"><b>${esc(v.size)}</b><small>${Number(v.quantity)||0} pcs</small></span>`).join(''):'<span class="no-variants">Aucune taille enregistrée</span>'}</div><p class="stock-price">${isAdmin()?`Achat ${money(p.purchase_price)} / `:''}Vente ${money(p.selling_price)}</p></div><strong>${stockFor(p)} pcs</strong></div>`}).join('')||'<div class="empty">Aucun produit.</div>';
+$('saveSale').addEventListener('click',async()=>{
+  const variantId=$('saleVariant').value;
+  const qty=Number($('saleQty').value);
+  const sellingPrice=Number($('salePrice').value);
+
+  if(!variantId){
+    message('saleMessage','Choisissez une variante disponible.',true);
+    return;
+  }
+
+  if(!Number.isInteger(qty)||qty<1){
+    message('saleMessage','Quantité invalide.',true);
+    return;
+  }
+
+  if(!Number.isFinite(sellingPrice)||sellingPrice<=0){
+    message('saleMessage','Entrez un prix de vente valide.',true);
+    return;
+  }
+
+  const btn=$('saveSale');
+  btn.disabled=true;
+  message('saleMessage','Enregistrement de la vente…');
+
+  const {error}=await client.rpc('record_sale',{
+    p_variant_id:variantId,
+    p_quantity:qty,
+    p_selling_price:sellingPrice
+  });
+
+  btn.disabled=false;
+
+  if(error){
+    message('saleMessage',error.message,true);
+    return;
+  }
+
+  message('saleMessage','Vente enregistrée. Le stock a été mis à jour.');
+  $('saleQty').value=1;
+  $('salePrice').value='';
+  $('photoPreview').hidden=true;
+  $('salePhoto').value='';
+
+  try{
+    await loadData();
+  }catch(err){
+    message('saleMessage',`Vente enregistrée, actualisation impossible : ${err.message}`,true);
+  }
+});
  $('saleProduct').innerHTML=products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${esc(p.color||'')}</option>`).join(''); updateVariants();
  $('historyList').innerHTML=sales.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(s=>`<div class="sale-row"><b>${esc(s.name)} · ${esc(s.variant)}</b><p>${s.date?new Date(s.date).toLocaleString('fr-FR'):'—'}</p><p>${s.qty} × ${money(s.price)}${isAdmin()?` · Achat ${money(s.cost)} · Marge ${money((s.price-s.cost)*s.qty)}`:''}</p></div>`).join('')||'<div class="empty">Aucune vente enregistrée.</div>';
 }
 function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function updateVariants(){const selectedId=String($('saleProduct').value||'');const p=products.find(x=>String(x.id)===selectedId)||products[0];const vs=p?variants.filter(v=>String(v.product_id)===String(p.id)):[];const available=vs.filter(v=>Number(v.quantity)>0);$('saleVariant').innerHTML=available.length?available.map(v=>`<option value="${v.id}">${esc(v.size)} — stock ${Number(v.quantity)}</option>`).join(''):'<option value="">Aucune pointure disponible</option>';$('saleVariant').disabled=!available.length;$('salePrice').value='';}
+function updateVariants(){const selectedId=String($('saleProduct').value||'');const p=products.find(x=>String(x.id)===selectedId)||products[0];const vs=p?variants.filter(v=>String(v.product_id)===String(p.id)):[];const available=vs.filter(v=>Number(v.quantity)>0);$('saleVariant').innerHTML=available.length?available.map(v=>`<option value="${v.id}">${esc(v.size)} — stock ${Number(v.quantity)}</option>`).join(''):'<option value="">Aucune pointure disponible</option>';$('saleVariant').disabled=!available.length;$('salePrice').value='';}y
 $('saleProduct').addEventListener('change',updateVariants);
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();message('loginMessage','Connexion…');const {data,error}=await client.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error){message('loginMessage',error.message,true);return;}try{await initSession(data.user);}catch(err){await client.auth.signOut();showLoggedOut();message('loginMessage',`Profil ou données indisponibles : ${err.message}`,true);}});
 async function initSession(user){currentUser=user;const {data:profile,error}=await client.from('profiles').select('full_name,role').eq('id',user.id).single();if(error)throw error;if(!['admin','seller'].includes(profile.role))throw new Error('Rôle utilisateur non autorisé.');currentProfile=profile;showLoggedIn();await loadData();}
