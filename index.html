@@ -27,7 +27,7 @@
 <label>Produit<select id="saleProduct" required></select></label>
 <label>Pointure / variante<select id="saleVariant" required></select></label>
 <label>Quantité<input id="saleQty" type="number" min="1" value="1" inputmode="numeric"></label>
-<label>Prix de vente (DH)<input id="salePrice" type="number" readonly></label>
+<label>Prix de vente (DH) — facultatif<input name="price" type="number" min="0" step="0.01" placeholder="À définir lors de la vente"></label>
 <button class="primary" id="saveSale">CONFIRMER LA VENTE</button><p id="saleMessage" class="message"></p>
 </section>
 <section id="stock" class="panel">
