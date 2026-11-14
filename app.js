@@ -12,15 +12,28 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>swit
 function showLoggedIn(){ $('loginView').hidden=true; $('appView').hidden=false; $('logoutBtn').hidden=false; $('userLabel').textContent=isAdmin()?'ADMIN':'VENDEUR'; $('welcomeText').textContent=`Bienvenue ${currentProfile.full_name || ''} · ${isAdmin()?'Accès administrateur':'Espace vendeur'}`; $('addProductBtn').hidden=!isAdmin(); $('profitCard').hidden=!isAdmin(); }
 function showLoggedOut(){ currentUser=null; currentProfile=null; products=[];variants=[];sales=[]; $('loginView').hidden=false; $('appView').hidden=true; $('logoutBtn').hidden=true; $('userLabel').textContent='CONNEXION'; }
 async function loadData(){
- $('syncTag').textContent='SYNCHRONISATION…';
- const [pRes,vRes,sRes] = await Promise.all([
-   isAdmin()?client.rpc('admin_get_products'):client.from('products').select('id,name,color,selling_price,created_at'),
-   client.from('variants').select('id,product_id,size,quantity'),
-   isAdmin()?client.rpc('admin_get_all_sales'):client.rpc('get_my_sales')
- ]);
- for(const r of [pRes,vRes,sRes]) if(r.error) throw r.error;
-products=(pRes.data||[]).map(p=>({...p,id:p.id||p.product_id}));
-variants=vRes.data||[];=(sRes.data||[]).map(normalizeSale); render(); $('syncTag').textContent='CLOUD CONNECTÉ';
+  $('syncTag').textContent='SYNCHRONISATION…';
+
+  const [pRes,vRes,sRes] = await Promise.all([
+    isAdmin()
+      ? client.rpc('admin_get_products')
+      : client.from('products').select('id,name,color,selling_price,created_at'),
+    client.from('variants').select('id,product_id,size,quantity'),
+    isAdmin()
+      ? client.rpc('admin_get_all_sales')
+      : client.rpc('get_my_sales')
+  ]);
+
+  for(const r of [pRes,vRes,sRes]){
+    if(r.error) throw r.error;
+  }
+
+  products=(pRes.data||[]).map(p=>({...p,id:p.id||p.product_id}));
+  variants=vRes.data||[];
+  sales=(sRes.data||[]).map(normalizeSale);
+
+  render();
+  $('syncTag').textContent='CLOUD CONNECTÉ';
 }
 function normalizeSale(s){return {...s, name:s.product_name||s.name||'Produit', variant:s.size||s.variant||'—', qty:Number(s.quantity??s.qty??0), price:Number(s.selling_price??s.price??0), cost:Number(s.purchase_price??s.cost??0), date:s.created_at||s.date};}
 function stockFor(p){return variants.filter(v=>v.product_id===p.id).reduce((n,v)=>n+Number(v.quantity||0),0)}
